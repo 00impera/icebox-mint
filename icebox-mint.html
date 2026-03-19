@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IceBox — Monad NFT</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#000000;--surface:#060608;--surface2:#0a0b10;--panel:#07080e;
+  --cyan:#00ffe7;--cyan2:#00c4b4;--magenta:#ff00c8;--mag2:#c800a0;
+  --yellow:#f5ff00;--orange:#ff6a00;--green:#39ff14;--violet:#aa44ff;
+  --text:#e8fff8;--muted:#334040;
+  --mono:'Share Tech Mono',monospace;--display:'Orbitron',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;overflow-x:hidden;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,231,0.012) 2px,rgba(0,255,231,0.012) 4px);pointer-events:none;z-index:9999;}
+.blob{position:fixed;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0;}
+.b1{width:600px;height:600px;top:-150px;left:-150px;background:rgba(0,255,231,0.055);}
+.b2{width:500px;height:500px;top:25%;right:-120px;background:rgba(255,0,200,0.06);}
+.b3{width:350px;height:350px;bottom:5%;left:25%;background:rgba(245,255,0,0.035);}
+.wrap{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:0 24px;}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:18px 0;border-bottom:1px solid rgba(0,255,231,0.1);}
+.logo{font-family:var(--display);font-size:20px;font-weight:900;letter-spacing:5px;color:var(--cyan);text-shadow:0 0 24px rgba(0,255,231,0.65),0 0 60px rgba(0,255,231,0.2);display:flex;align-items:center;gap:10px;}
+.logo-box{width:30px;height:30px;border:1.5px solid var(--cyan);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 14px rgba(0,255,231,0.45),inset 0 0 8px rgba(0,255,231,0.1);}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.chain-badge{font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:4px 12px;border:1px solid rgba(245,255,0,0.35);border-radius:2px;color:var(--yellow);background:rgba(245,255,0,0.05);text-shadow:0 0 8px rgba(245,255,0,0.5);}
+.connect-btn{font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:8px 16px;border:1px solid rgba(0,255,231,0.3);border-radius:2px;background:transparent;color:var(--cyan);cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.connect-btn:hover{background:rgba(0,255,231,0.07);box-shadow:0 0 18px rgba(0,255,231,0.2);}
+.connect-btn.connected{border-color:rgba(57,255,20,0.45);color:var(--green);text-shadow:0 0 8px rgba(57,255,20,0.55);}
+
+.hero{text-align:center;padding:72px 0 56px;}
+.hero-eyebrow{font-size:9px;letter-spacing:5px;color:var(--muted);text-transform:uppercase;margin-bottom:22px;}
+.hero h1{font-family:var(--display);font-weight:900;line-height:0.88;margin-bottom:20px;}
+.h1-the{display:block;font-size:clamp(14px,2vw,22px);letter-spacing:12px;color:rgba(255,255,255,0.1);margin-bottom:6px;}
+.h1-icebox{display:block;font-size:clamp(58px,10vw,120px);letter-spacing:-2px;color:var(--cyan);text-shadow:0 0 40px rgba(0,255,231,0.75),0 0 100px rgba(0,255,231,0.3),0 0 180px rgba(0,255,231,0.1);}
+.hero-sub{font-size:11px;letter-spacing:2px;color:var(--muted);max-width:360px;margin:0 auto 36px;line-height:2;}
+.hero-stats{display:flex;justify-content:center;gap:52px;font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;}
+.hero-stats .val{font-family:var(--display);font-size:24px;font-weight:700;color:var(--cyan);display:block;margin-bottom:4px;text-shadow:0 0 14px rgba(0,255,231,0.55);}
+
+.section-label{font-size:9px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:12px;}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,255,231,0.18),transparent);}
+
+.tiers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:6px;margin-bottom:48px;}
+
+.tier-card{background:var(--surface);border:1px solid rgba(255,255,255,0.04);border-radius:3px;padding:18px;cursor:pointer;transition:all 0.18s;position:relative;overflow:hidden;}
+.tier-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity 0.18s;}
+.tier-card:hover{border-color:rgba(255,255,255,0.12);transform:translateY(-1px);}
+.tier-card:hover::before{opacity:1;}
+.tier-card.selected{border-width:1px;}
+.tier-card.selected::before{opacity:1;}
+
+.tier-rock    {--tc:#ff6a00;--tg:rgba(255,106,0,0.09);--ts:0 0 14px rgba(255,106,0,0.65);}
+.tier-silver  {--tc:#aaccff;--tg:rgba(170,204,255,0.07);--ts:0 0 14px rgba(170,204,255,0.55);}
+.tier-gold    {--tc:#f5ff00;--tg:rgba(245,255,0,0.08);--ts:0 0 16px rgba(245,255,0,0.65);}
+.tier-fire    {--tc:#ff2200;--tg:rgba(255,34,0,0.09);--ts:0 0 16px rgba(255,34,0,0.65);}
+.tier-crystal {--tc:#00ffe7;--tg:rgba(0,255,231,0.08);--ts:0 0 16px rgba(0,255,231,0.65);}
+.tier-platinum{--tc:#ff00c8;--tg:rgba(255,0,200,0.08);--ts:0 0 16px rgba(255,0,200,0.65);}
+.tier-premier {--tc:#ffaa00;--tg:rgba(255,170,0,0.08);--ts:0 0 16px rgba(255,170,0,0.65);}
+.tier-ultra   {--tc:#aa44ff;--tg:rgba(170,68,255,0.09);--ts:0 0 18px rgba(170,68,255,0.7);}
+
+.tier-card.selected{border-color:var(--tc)!important;background:rgba(0,0,0,0.6);}
+.tier-card.selected::before{background:var(--tg);}
+@keyframes neon-pulse{0%,100%{box-shadow:none;}50%{box-shadow:0 0 28px rgba(0,0,0,0.5),0 0 0 1px var(--tc);}}
+.tier-card.selected{animation:neon-pulse 2.5s ease-in-out infinite;}
+
+.tier-dot{width:6px;height:6px;border-radius:50%;background:var(--tc);display:inline-block;margin-right:7px;box-shadow:var(--ts);}
+.tier-mat-name{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--tc);display:flex;align-items:center;margin-bottom:14px;text-shadow:var(--ts);}
+.tier-price{font-family:var(--display);font-size:19px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.tier-price-sub{font-size:8px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;text-transform:uppercase;}
+.tier-odds{display:flex;flex-direction:column;gap:3px;}
+.odds-row{display:flex;justify-content:space-between;align-items:center;font-size:9px;letter-spacing:0.5px;}
+.odds-label{color:var(--muted);}
+.odds-bar{height:1px;background:rgba(255,255,255,0.04);margin:3px 0 7px;overflow:hidden;}
+.odds-bar-fill{height:100%;background:var(--tc);opacity:0.55;}
+
+.mint-section{display:grid;grid-template-columns:1fr 340px;gap:12px;margin-bottom:52px;}
+@media(max-width:720px){.mint-section{grid-template-columns:1fr;}}
+
+.preview-panel{background:var(--surface);border:1px solid rgba(0,255,231,0.09);border-radius:3px;padding:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;position:relative;overflow:hidden;}
+.preview-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0.35;}
+.box-preview-svg{width:185px;height:185px;margin-bottom:18px;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.box-preview-svg{animation:float 3.5s ease-in-out infinite;}
+.preview-name{font-size:10px;letter-spacing:2px;color:var(--muted);text-align:center;line-height:1.9;text-transform:uppercase;}
+.preview-name strong{text-shadow:0 0 10px currentColor;}
+
+.mint-panel{background:var(--surface);border:1px solid rgba(255,255,255,0.06);border-radius:3px;padding:26px;display:flex;flex-direction:column;gap:18px;position:relative;}
+.mint-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--magenta),transparent);opacity:0.3;}
+.mint-panel h3{font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:4px;color:var(--text);}
+.mint-row{display:flex;justify-content:space-between;align-items:center;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
+.mint-row .val{color:var(--text);}
+.divider{border:none;border-top:1px solid rgba(255,255,255,0.04);}
+
+.qty-control{display:flex;align-items:center;border:1px solid rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;width:fit-content;}
+.qty-btn{width:36px;height:36px;background:var(--surface2);border:none;color:var(--cyan);font-size:18px;cursor:pointer;transition:background 0.15s;font-family:var(--display);}
+.qty-btn:hover{background:rgba(0,255,231,0.09);}
+.qty-display{width:52px;text-align:center;font-family:var(--display);font-size:16px;font-weight:700;color:var(--text);background:var(--surface);border:none;outline:none;}
+
+.mint-total-label{font-size:8px;letter-spacing:3px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;}
+.mint-total{font-family:var(--display);font-size:28px;font-weight:900;letter-spacing:-1px;}
+
+.mint-btn{width:100%;padding:15px;border-radius:2px;border:none;font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+.mint-btn-connect{background:transparent;color:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.07);}
+.mint-btn-connect:hover{border-color:rgba(0,255,231,0.25);color:rgba(0,255,231,0.6);}
+.mint-btn-active{background:transparent;border:1px solid var(--cyan);color:var(--cyan);text-shadow:0 0 12px rgba(0,255,231,0.7);box-shadow:0 0 24px rgba(0,255,231,0.12),inset 0 0 24px rgba(0,255,231,0.03);}
+.mint-btn-active:hover{background:rgba(0,255,231,0.07);box-shadow:0 0 36px rgba(0,255,231,0.22),inset 0 0 24px rgba(0,255,231,0.05);}
+.mint-btn-active:active{transform:scale(0.99);}
+
+.contract-info{font-size:8px;letter-spacing:1.5px;color:var(--muted);text-align:center;line-height:2;}
+.contract-info a{color:rgba(0,255,231,0.4);text-decoration:none;}
+.contract-info a:hover{color:var(--cyan);}
+
+.odds-section{margin-bottom:52px;}
+.neon-table{width:100%;border-collapse:collapse;font-size:10px;letter-spacing:0.5px;}
+.neon-table th{text-align:left;padding:10px 14px;color:var(--muted);font-weight:400;border-bottom:1px solid rgba(255,255,255,0.04);letter-spacing:2px;font-size:8px;text-transform:uppercase;}
+.neon-table td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.025);color:var(--text);}
+.neon-table tr:last-child td{border-bottom:none;}
+.neon-table tbody tr:hover td{background:rgba(255,255,255,0.015);}
+.mat-dot{display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:7px;vertical-align:middle;}
+
+.p-empty {color:rgba(255,255,255,0.16)!important;}
+.p-small {color:#00ffe7!important;text-shadow:0 0 6px rgba(0,255,231,0.5);}
+.p-medium{color:#39ff14!important;text-shadow:0 0 6px rgba(57,255,20,0.5);}
+.p-big   {color:#ff00c8!important;text-shadow:0 0 6px rgba(255,0,200,0.5);}
+.p-jackpot{color:#f5ff00!important;text-shadow:0 0 10px rgba(245,255,0,0.7);font-weight:700;}
+
+.vault-section{margin-bottom:52px;}
+.vault-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(162px,1fr));gap:6px;}
+.vault-card{background:var(--surface);border:1px solid rgba(255,255,255,0.04);border-radius:3px;padding:16px;position:relative;overflow:hidden;transition:border-color 0.2s;}
+.vault-card:hover{border-color:rgba(0,255,231,0.12);}
+.vault-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--magenta),transparent);opacity:0.18;}
+.vault-name{font-family:var(--display);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:2px;}
+.vault-addr{font-size:8px;color:var(--muted);margin-bottom:10px;letter-spacing:0.5px;}
+.vault-label{font-size:7px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:2px;}
+.vault-bal{font-family:var(--display);font-size:15px;font-weight:700;color:var(--magenta);text-shadow:0 0 10px rgba(255,0,200,0.45);}
+
+footer{border-top:1px solid rgba(255,255,255,0.04);padding:24px 0;display:flex;justify-content:space-between;align-items:center;font-size:8px;letter-spacing:2px;color:var(--muted);}
+footer a{color:rgba(0,255,231,0.35);text-decoration:none;}
+footer a:hover{color:var(--cyan);}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid rgba(255,255,255,0.08);border-radius:3px;padding:12px 18px;font-size:10px;letter-spacing:1px;color:var(--text);z-index:9998;transform:translateY(80px);opacity:0;transition:all 0.3s;max-width:320px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:rgba(57,255,20,0.35);box-shadow:0 0 20px rgba(57,255,20,0.08);}
+.toast.error{border-color:rgba(255,0,0,0.35);box-shadow:0 0 20px rgba(255,0,0,0.08);}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface2);border:1px solid rgba(0,255,231,0.18);border-radius:3px;padding:36px;max-width:400px;width:90%;text-align:center;box-shadow:0 0 60px rgba(0,255,231,0.07);}
+.modal h2{font-family:var(--display);font-size:18px;font-weight:700;margin-bottom:8px;letter-spacing:3px;}
+.modal p{font-size:10px;color:var(--muted);margin-bottom:24px;line-height:2;letter-spacing:1px;}
+.modal-icon{font-size:44px;margin-bottom:14px;}
+.modal-close{background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:2px;color:var(--muted);font-family:var(--mono);font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:10px 22px;cursor:pointer;transition:all 0.2s;}
+.modal-close:hover{color:var(--text);border-color:rgba(255,255,255,0.18);}
+.tx-link{display:block;font-size:8px;letter-spacing:1px;color:rgba(0,255,231,0.45);margin-bottom:20px;word-break:break-all;text-decoration:none;}
+.tx-link:hover{color:var(--cyan);}
+</style>
+</head>
+<body>
+
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+
+<div class="wrap">
+
+<nav>
+  <div class="logo">
+    <div class="logo-box">❄</div>
+    ICEBOX
+  </div>
+  <div class="nav-right">
+    <div class="chain-badge">◈ MONAD MAINNET</div>
+    <button class="connect-btn" id="connectBtn" onclick="connectWallet()">[ CONNECT ]</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">// season 01 — live on monad //</div>
+  <h1>
+    <span class="h1-the">THE</span>
+    <span class="h1-icebox">ICEBOX</span>
+  </h1>
+  <p class="hero-sub">11 tiers · 8 materials · random vault prizes · what's inside yours</p>
+  <div class="hero-stats">
+    <div><span class="val" id="statSupply">—</span>minted</div>
+    <div><span class="val">5</span>vault tokens</div>
+    <div><span class="val">100K</span>jackpot</div>
+  </div>
+</div>
+
+<div class="section-label">// select tier</div>
+<div class="tiers-grid" id="tiersGrid"></div>
+
+<div class="mint-section">
+  <div class="preview-panel">
+    <svg class="box-preview-svg" id="boxPreview" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="pbg" cx="50%" cy="50%" r="65%">
+          <stop offset="0%" stop-color="#0a0b10"/>
+          <stop offset="100%" stop-color="#000000"/>
+        </radialGradient>
+        <linearGradient id="pb1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ff6a00" stop-opacity="0.9" id="pgc1"/>
+          <stop offset="100%" stop-color="#552200" id="pgc2"/>
+        </linearGradient>
+      </defs>
+      <rect width="400" height="400" fill="url(#pbg)"/>
+      <rect x="108" y="188" width="184" height="140" rx="8" fill="url(#pb1)" stroke="#ff6a00" stroke-width="1.5" id="pbox1"/>
+      <rect x="98" y="158" width="204" height="38" rx="6" fill="url(#pb1)" stroke="#ff6a00" stroke-width="1.5" id="pbox2"/>
+      <rect x="186" y="158" width="28" height="170" fill="#ff6a00" opacity="0.22" id="pbar"/>
+      <rect x="108" y="192" width="184" height="16" fill="#ff6a00" opacity="0.18"/>
+      <ellipse cx="174" cy="158" rx="24" ry="11" fill="#ff9944" opacity="0.6" transform="rotate(-28 174 158)"/>
+      <ellipse cx="226" cy="158" rx="24" ry="11" fill="#ff9944" opacity="0.6" transform="rotate(28 226 158)"/>
+      <rect x="196" y="147" width="8" height="15" rx="3" fill="#ff6a00" id="phandle"/>
+      <circle cx="125" cy="125" r="3" fill="#ff6a00"><animate attributeName="opacity" values="0;1;0" dur="1.7s" repeatCount="indefinite"/></circle>
+      <circle cx="285" cy="115" r="2" fill="#ff9944"><animate attributeName="opacity" values="0;1;0" dur="2.2s" begin="0.5s" repeatCount="indefinite"/></circle>
+      <circle cx="318" cy="212" r="2.5" fill="#ff6a00"><animate attributeName="opacity" values="0;1;0" dur="1.4s" begin="0.9s" repeatCount="indefinite"/></circle>
+      <circle cx="82" cy="258" r="2" fill="#ff9944"><animate attributeName="opacity" values="0;1;0" dur="1.9s" begin="1.3s" repeatCount="indefinite"/></circle>
+    </svg>
+    <div class="preview-name">
+      <strong id="previewName" style="color:#ff6a00">Rock Box</strong><br>
+      <span id="previewSub">Tier 0 · 100 MON</span>
+    </div>
+  </div>
+
+  <div class="mint-panel">
+    <h3>// MINT</h3>
+    <div>
+      <div class="mint-row"><span>Selected tier</span><span class="val" id="infoTier">Rock (0)</span></div>
+      <div class="mint-row" style="margin-top:8px"><span>Price / box</span><span class="val" id="infoPrice">100 MON</span></div>
+    </div>
+    <hr class="divider">
+    <div>
+      <div class="mint-row" style="margin-bottom:10px"><span>Quantity</span></div>
+      <div class="qty-control">
+        <button class="qty-btn" onclick="changeQty(-1)">−</button>
+        <div class="qty-display" id="qtyDisplay">1</div>
+        <button class="qty-btn" onclick="changeQty(1)">+</button>
+      </div>
+    </div>
+    <hr class="divider">
+    <div>
+      <div class="mint-total-label">Total cost</div>
+      <div class="mint-total" id="totalCost" style="color:#ff6a00;text-shadow:0 0 20px rgba(255,106,0,0.55)">100 MON</div>
+    </div>
+    <button class="mint-btn mint-btn-connect" id="mintBtn" onclick="handleMint()">[ CONNECT TO MINT ]</button>
+    <div class="contract-info">
+      CONTRACT: <a href="https://explorer.monad.xyz/address/0x307416a34f911e85Cf2cBF0C0aF3527491B40002" target="_blank">0x3074...0002</a><br>
+      VERIFIED ON SOURCIFY ✓
+    </div>
+  </div>
+</div>
+
+<div class="odds-section">
+  <div class="section-label">// prize odds matrix</div>
+  <table class="neon-table">
+    <thead>
+      <tr>
+        <th>Tier</th><th>Material</th><th>Price</th>
+        <th class="p-empty">Empty</th>
+        <th class="p-small">Small</th>
+        <th class="p-medium">Medium</th>
+        <th class="p-big">Big</th>
+        <th class="p-jackpot">Jackpot</th>
+      </tr>
+    </thead>
+    <tbody id="oddsBody"></tbody>
+  </table>
+</div>
+
+<div class="vault-section">
+  <div class="section-label">// prize vault</div>
+  <div class="vault-grid">
+    <div class="vault-card"><div class="vault-name">mUSDC</div><div class="vault-addr">0xA987...C5dF</div><div class="vault-label">Balance</div><div class="vault-bal" id="bal0">···</div></div>
+    <div class="vault-card"><div class="vault-name">mUSD</div><div class="vault-addr">0xf77C...2c8A</div><div class="vault-label">Balance</div><div class="vault-bal" id="bal1">···</div></div>
+    <div class="vault-card"><div class="vault-name">PENDLE</div><div class="vault-addr">0xf2CF...201B</div><div class="vault-label">Balance</div><div class="vault-bal" id="bal2">···</div></div>
+    <div class="vault-card"><div class="vault-name">GEMS</div><div class="vault-addr">0x4993...0B70</div><div class="vault-label">Balance</div><div class="vault-bal" id="bal3">···</div></div>
+    <div class="vault-card"><div class="vault-name">WETH</div><div class="vault-addr">0x39AA...9246</div><div class="vault-label">Balance</div><div class="vault-bal" id="bal4">···</div></div>
+  </div>
+</div>
+
+<footer>
+  <div>ICEBOX NFT © 2026 — MONAD MAINNET</div>
+  <div><a href="https://explorer.monad.xyz/address/0x307416a34f911e85Cf2cBF0C0aF3527491B40002" target="_blank">EXPLORER</a> · <a href="#" target="_blank">SOURCIFY ✓</a></div>
+</footer>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-icon" id="modalIcon">🎁</div>
+    <h2 id="modalTitle">MINTING</h2>
+    <p id="modalMsg">Waiting for confirmation in wallet...</p>
+    <a class="tx-link" id="modalTxLink" href="#" target="_blank" style="display:none"></a>
+    <button class="modal-close" onclick="closeModal()">[ CLOSE ]</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const CONTRACT="0x307416a34f911e85Cf2cBF0C0aF3527491B40002";
+const RPC="https://monad-mainnet.g.alchemy.com/v2/Uwb7T0DbXMQHjiJBNf9_b005qYjLmJqk";
+const CHAIN_ID="0x8f";
+
+const TIERS=[
+  {id:0, mat:"Rock",     price:100,   cls:"tier-rock",     c1:"#ff6a00",c2:"#552200",stroke:"#ff6a00"},
+  {id:1, mat:"Silver",   price:200,   cls:"tier-silver",   c1:"#c0c8d8",c2:"#6080a0",stroke:"#aaccff"},
+  {id:2, mat:"Gold",     price:300,   cls:"tier-gold",     c1:"#f5ff00",c2:"#888800",stroke:"#f5ff00"},
+  {id:3, mat:"Fire",     price:400,   cls:"tier-fire",     c1:"#ff2200",c2:"#660000",stroke:"#ff2200"},
+  {id:4, mat:"Crystal",  price:500,   cls:"tier-crystal",  c1:"#00ffe7",c2:"#007060",stroke:"#00ffe7"},
+  {id:5, mat:"Platinum", price:1000,  cls:"tier-platinum", c1:"#ff00c8",c2:"#660050",stroke:"#ff00c8"},
+  {id:6, mat:"Premier",  price:2000,  cls:"tier-premier",  c1:"#ffaa00",c2:"#775500",stroke:"#ffaa00"},
+  {id:7, mat:"Ultra",    price:3000,  cls:"tier-ultra",    c1:"#aa44ff",c2:"#440088",stroke:"#aa44ff"},
+  {id:8, mat:"Ultra",    price:4000,  cls:"tier-ultra",    c1:"#aa44ff",c2:"#440088",stroke:"#aa44ff"},
+  {id:9, mat:"Ultra",    price:5000,  cls:"tier-ultra",    c1:"#aa44ff",c2:"#440088",stroke:"#aa44ff"},
+  {id:10,mat:"Ultra",    price:10000, cls:"tier-ultra",    c1:"#aa44ff",c2:"#440088",stroke:"#aa44ff"},
+];
+
+const DOTS={"Rock":"#ff6a00","Silver":"#aaccff","Gold":"#f5ff00","Fire":"#ff2200","Crystal":"#00ffe7","Platinum":"#ff00c8","Premier":"#ffaa00","Ultra":"#aa44ff"};
+
+function getOdds(t){
+  const e=Math.max(10,40-t*3),s=30,m=18+Math.floor(t*0.5),b=9+Math.floor(t*0.3),j=Math.max(1,100-e-s-m-b);
+  return[e,s,m,b,j];
+}
+
+let selectedTier=0,qty=1,walletAddr=null,isConnected=false;
+
+const grid=document.getElementById("tiersGrid");
+TIERS.forEach((t,i)=>{
+  const o=getOdds(i);
+  const card=document.createElement("div");
+  card.className=`tier-card ${t.cls}`;
+  card.id=`tier-${i}`;
+  card.onclick=()=>selectTier(i);
+  card.innerHTML=`<div class="tier-mat-name"><span class="tier-dot"></span>${t.mat.toUpperCase()}</div><div class="tier-price">${t.price.toLocaleString()}</div><div class="tier-price-sub">MON · TIER ${i}</div><div class="tier-odds"><div class="odds-row"><span class="odds-label">JACKPOT</span><span class="odds-val p-jackpot">${o[4]}%</span></div><div class="odds-bar"><div class="odds-bar-fill" style="width:${o[4]*4}%"></div></div><div class="odds-row"><span class="odds-label">BIG</span><span class="odds-val p-big">${o[3]}%</span></div><div class="odds-row"><span class="odds-label">MEDIUM</span><span class="odds-val p-medium">${o[2]}%</span></div><div class="odds-row"><span class="odds-label">EMPTY</span><span class="odds-val p-empty">${o[0]}%</span></div></div>`;
+  grid.appendChild(card);
+});
+
+const oddsBody=document.getElementById("oddsBody");
+TIERS.forEach((t,i)=>{
+  const o=getOdds(i);const dc=DOTS[t.mat]||"#888";
+  const tr=document.createElement("tr");
+  tr.innerHTML=`<td style="color:#333;font-family:var(--display)">${i}</td><td><span class="mat-dot" style="background:${dc};box-shadow:0 0 6px ${dc}66"></span>${t.mat}</td><td style="color:#444">${t.price.toLocaleString()} MON</td><td class="p-empty">${o[0]}%</td><td class="p-small">${o[1]}%</td><td class="p-medium">${o[2]}%</td><td class="p-big">${o[3]}%</td><td class="p-jackpot">${o[4]}%</td>`;
+  oddsBody.appendChild(tr);
+});
+
+function selectTier(i){
+  document.querySelectorAll(".tier-card").forEach(c=>c.classList.remove("selected"));
+  document.getElementById(`tier-${i}`).classList.add("selected");
+  selectedTier=i;updatePreview();updateMintPanel();
+}
+
+function updatePreview(){
+  const t=TIERS[selectedTier];
+  const pn=document.getElementById("previewName");
+  pn.textContent=`${t.mat} Box`;
+  pn.style.color=t.stroke;
+  pn.style.textShadow=`0 0 14px ${t.stroke}88`;
+  document.getElementById("previewSub").textContent=`Tier ${selectedTier} · ${t.price.toLocaleString()} MON`;
+  document.getElementById("pgc1").setAttribute("stop-color",t.c1);
+  document.getElementById("pgc2").setAttribute("stop-color",t.c2);
+  ["pbox1","pbox2"].forEach(id=>{const el=document.getElementById(id);if(el)el.setAttribute("stroke",t.stroke);});
+  const pb=document.getElementById("pbar");if(pb)pb.setAttribute("fill",t.stroke);
+}
+
+function updateMintPanel(){
+  const t=TIERS[selectedTier];
+  document.getElementById("infoTier").textContent=`${t.mat} (${selectedTier})`;
+  document.getElementById("infoPrice").textContent=`${t.price.toLocaleString()} MON`;
+  const tc=document.getElementById("totalCost");
+  tc.textContent=`${(t.price*qty).toLocaleString()} MON`;
+  tc.style.color=t.stroke;
+  tc.style.textShadow=`0 0 20px ${t.stroke}66`;
+}
+
+function changeQty(d){
+  qty=Math.max(1,Math.min(10,qty+d));
+  document.getElementById("qtyDisplay").textContent=qty;
+  updateMintPanel();
+}
+
+selectTier(0);
+
+async function connectWallet(){
+  if(!window.ethereum){showToast("No wallet detected. Install MetaMask.","error");return;}
+  try{
+    const accounts=await window.ethereum.request({method:"eth_requestAccounts"});
+    walletAddr=accounts[0];
+    try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN_ID}]});}
+    catch(e){if(e.code===4902){await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:CHAIN_ID,chainName:"Monad Mainnet",nativeCurrency:{name:"MON",symbol:"MON",decimals:18},rpcUrls:["https://rpc.monad.xyz"],blockExplorerUrls:["https://explorer.monad.xyz"]}]});}}
+    isConnected=true;
+    const short=walletAddr.slice(0,6)+"..."+walletAddr.slice(-4);
+    document.getElementById("connectBtn").textContent=`[ ${short} ]`;
+    document.getElementById("connectBtn").classList.add("connected");
+    document.getElementById("mintBtn").textContent="[ MINT NOW ]";
+    document.getElementById("mintBtn").className="mint-btn mint-btn-active";
+    showToast("WALLET CONNECTED ✓","success");loadStats();
+  }catch(e){showToast("CONNECTION FAILED: "+(e.message||e),"error");}
+}
+
+async function handleMint(){
+  if(!isConnected){connectWallet();return;}
+  const t=TIERS[selectedTier];
+  const valueWei=BigInt(t.price)*BigInt(qty)*BigInt("1000000000000000000");
+  openModal("🎁","CONFIRM TX","Approve the transaction in your wallet...");
+  try{
+    const txHash=await window.ethereum.request({method:"eth_sendTransaction",params:[{from:walletAddr,to:CONTRACT,value:"0x"+valueWei.toString(16),data:encodeMint(selectedTier),gas:"0x"+(300000*qty).toString(16)}]});
+    document.getElementById("modalTitle").textContent="MINTING...";
+    document.getElementById("modalMsg").textContent="Transaction submitted. Awaiting confirmation on Monad.";
+    const txLink=document.getElementById("modalTxLink");
+    txLink.href=`https://explorer.monad.xyz/tx/${txHash}`;
+    txLink.textContent="TX: "+txHash.slice(0,24)+"...";
+    txLink.style.display="block";
+    await waitForTx(txHash);
+    document.getElementById("modalIcon").textContent="✅";
+    document.getElementById("modalTitle").textContent=`${qty} BOX${qty>1?"ES":""} MINTED`;
+    document.getElementById("modalMsg").textContent="Your IceBox is on-chain. Open it to reveal your prize!";
+    showToast("MINT SUCCESSFUL 🎉","success");loadStats();
+  }catch(e){closeModal();showToast("MINT FAILED: "+(e.message||e),"error");}
+}
+
+function encodeMint(tier){
+  return"0xa0712d68"+tier.toString(16).padStart(64,"0");
+}
+
+async function waitForTx(hash){
+  for(let i=0;i<60;i++){
+    await new Promise(r=>setTimeout(r,2000));
+    const result=await fetch(RPC,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",method:"eth_getTransactionReceipt",params:[hash],id:1})}).then(r=>r.json());
+    if(result.result&&result.result.status)return result.result;
+  }
+  throw new Error("Timeout");
+}
+
+async function loadStats(){
+  try{
+    const res=await fetch(RPC,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",method:"eth_call",params:[{to:CONTRACT,data:"0x18160ddd"},"latest"],id:1})}).then(r=>r.json());
+    if(res.result)document.getElementById("statSupply").textContent=parseInt(res.result,16).toLocaleString();
+  }catch(e){}
+  const tokens=[
+    {id:"bal0",addr:"0xA9873347059379E4db1111A716f0E00Cde26C5dF",dec:6},
+    {id:"bal1",addr:"0xf77C5C1a904813Fd63871B2Bb6A36268EDee2c8A",dec:6},
+    {id:"bal2",addr:"0xf2CFFF86c7E8DF74c7335Af23CeA9428a740201B",dec:18},
+    {id:"bal3",addr:"0x49931887171BF46922b2b80Aa834537A80C50B70",dec:18},
+    {id:"bal4",addr:"0x39AAF7DF83D7C1Fb6E22a5666A4bA57E62A19246",dec:18},
+  ];
+  const padAddr=CONTRACT.slice(2).padStart(64,"0");
+  for(const tok of tokens){
+    try{
+      const r=await fetch(RPC,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",method:"eth_call",params:[{to:tok.addr,data:"0x70a08231"+padAddr},"latest"],id:1})}).then(r=>r.json());
+      if(r.result){const raw=BigInt(r.result);document.getElementById(tok.id).textContent=Number(raw/BigInt(10**tok.dec)).toLocaleString();}
+    }catch(e){document.getElementById(tok.id).textContent="—";}
+  }
+}
+
+function openModal(icon,title,msg){
+  document.getElementById("modalIcon").textContent=icon;
+  document.getElementById("modalTitle").textContent=title;
+  document.getElementById("modalMsg").textContent=msg;
+  document.getElementById("modalTxLink").style.display="none";
+  document.getElementById("modalOverlay").classList.add("open");
+}
+function closeModal(){document.getElementById("modalOverlay").classList.remove("open");}
+function showToast(msg,type=""){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.className="toast show "+type;
+  setTimeout(()=>t.className="toast "+type,3500);
+}
+
+loadStats();
+</script>
+</body>
+</html>

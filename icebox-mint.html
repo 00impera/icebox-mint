@@ -4,19 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IceBox — Monad NFT</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"></noscript>
 <style>
 :root {
   --bg:#000000;--surface:#060608;--surface2:#0a0b10;--panel:#07080e;
   --cyan:#00ffe7;--cyan2:#00c4b4;--magenta:#ff00c8;--mag2:#c800a0;
   --yellow:#f5ff00;--orange:#ff6a00;--green:#39ff14;--violet:#aa44ff;
   --text:#e8fff8;--muted:#334040;
-  --mono:'Share Tech Mono',monospace;--display:'Orbitron',monospace;
+  --mono:'Share Tech Mono','Courier New',Courier,monospace;
+  --display:'Orbitron','Share Tech Mono','Courier New',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;overflow-x:hidden;}
+html{background:#000000;}
+body{background:#000000;color:#e8fff8;font-family:'Share Tech Mono','Courier New',Courier,monospace;min-height:100vh;overflow-x:hidden;}
 body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,231,0.012) 2px,rgba(0,255,231,0.012) 4px);pointer-events:none;z-index:9999;}
-.blob{position:fixed;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0;}
+.blob{position:fixed;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0;will-change:transform;}
 .b1{width:600px;height:600px;top:-150px;left:-150px;background:rgba(0,255,231,0.055);}
 .b2{width:500px;height:500px;top:25%;right:-120px;background:rgba(255,0,200,0.06);}
 .b3{width:350px;height:350px;bottom:5%;left:25%;background:rgba(245,255,0,0.035);}
